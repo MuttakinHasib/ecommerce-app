@@ -6,27 +6,24 @@ import ShopPage from './pages/shop/ShopPage';
 import Header from './components/Header/Header';
 import AuthPage from './pages/AuthPage';
 import { auth, createUserProfileDocument } from './Firebase/Utils';
+import { connect } from 'react-redux';
+import { setUser } from './redux/User/Action';
 
 class App extends Component {
-  state = {
-    user: null,
-  };
-
   unsubscribeFromAuth = null;
   componentDidMount() {
+    const { setUser } = this.props;
     this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
       if (userAuth) {
         const userRef = await createUserProfileDocument(userAuth);
         userRef.onSnapshot(snapShot => {
-          this.setState({
-            user: {
-              id: snapShot.id,
-              ...snapShot.data(),
-            },
+          setUser({
+            id: snapShot.id,
+            ...snapShot.data(),
           });
         });
       } else {
-        this.setState({ user: userAuth });
+        setUser(userAuth);
       }
     });
   }
@@ -34,10 +31,9 @@ class App extends Component {
     this.unsubscribeFromAuth();
   }
   render() {
-    console.log(this.state.users);
     return (
       <div className='App'>
-        <Header users={this.state.users} />
+        <Header />
         <Switch>
           <Route exact path='/' component={HomePage} />
           <Route exact path='/shop' component={ShopPage} />
@@ -48,4 +44,8 @@ class App extends Component {
   }
 }
 
-export default App;
+const mapDispatchToProps = dispatch => ({
+  setUser: user => dispatch(setUser(user)),
+});
+
+export default connect(null, mapDispatchToProps)(App);
